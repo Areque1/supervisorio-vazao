@@ -1,5 +1,11 @@
 # Simulação de Supervisório para Controle de Vazão (Malha FIC-101)
 
+**Disciplina:** Análise e Processamento de Sinais (2026)
+
+**Autores:** Lucas Areque, Pedro Maciel, Samily Oliveira, Wildison Barbosa e Cauê Aguiar
+
+**Simulador:** https://areque1.github.io/supervisorio-vazao/
+
 ## 1. Introdução e objetivo
 
 Este trabalho apresenta um sistema supervisório (IHM/SCADA) simulado para uma malha de controle de vazão, identificada como FIC-101. A simulação reproduz uma bomba centrífuga, uma válvula de controle e três transmissores. Um controlador PID, equivalente ao programado em um CLP, mantém a vazão no valor desejado. A simulação roda no navegador e gera relatórios de operação com vazão, pressão, alarmes e desempenho da malha.

@@ -4,6 +4,16 @@ IHM/SCADA simulada de uma malha de controle de vazão, com bomba centrífuga, v�
 
 **Simulador online: https://areque1.github.io/supervisorio-vazao/**
 
+Trabalho da disciplina **Análise e Processamento de Sinais** (2026).
+Autores: Lucas Areque, Pedro Maciel, Samily Oliveira, Wildison Barbosa e Cauê Aguiar.
+
+## Documentos
+
+| Documento | Arquivo |
+| --- | --- |
+| Texto do trabalho | [`docs/trabalho.md`](docs/trabalho.md) |
+| Apresentação (PDF, 12 slides) | [`docs/apresentacao.pdf`](docs/apresentacao.pdf) |
+
 ## Como usar
 
 1. Acesse o [simulador online](https://areque1.github.io/supervisorio-vazao/) ou abra o `index.html` em qualquer navegador.
