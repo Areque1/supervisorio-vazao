@@ -1,0 +1,989 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body style="margin:0">
+<title>Supervisório FIC-101</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: IHM de alto desempenho (ISA-101) — fundo neutro acinzentado, cor reservada a alarmes e falhas;
+   cabeçalho fixo com relógio/alarmes, abas de telas, grade sinótico + faceplate. */
+:root {
+  --bg: #dfe3e7; --panel: #eef1f3; --panel-2: #e6eaee; --line: #b4bcc4; --line-2: #cfd5db;
+  --fg: #1b232b; --muted: #59646f; --accent: #2b5d8c; --accent-fg: #ffffff;
+  --pipe: #3a4651; --pipe-idle: #9aa4ad; --liquid: #8fa7bd;
+  --hi: #c4261d; --hi-bg: #f7dad7; --med: #b77900; --med-bg: #fbecc6; --ok: #2f7a4f;
+  --sim: #7b3fa0; --sim-bg: #eadcf2;
+  --t-pv: #1d4f80; --t-sp: #7b3fa0; --t-cv: #2a7d6d; --t-p1: #a24a1a; --t-p2: #4f6b1f; --grid: #cfd5db;
+  --f-head: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --r: 4px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #14181c; --panel: #1c2126; --panel-2: #22282e; --line: #3a434c; --line-2: #2c343b;
+  --fg: #dde3e8; --muted: #8e99a3; --accent: #6ea4d8; --accent-fg: #0e1720;
+  --pipe: #b9c3cc; --pipe-idle: #4e5862; --liquid: #3b5268;
+  --hi: #ff6a5f; --hi-bg: #4a1c19; --med: #f0b43c; --med-bg: #43340f; --ok: #5fc38a;
+  --sim: #c89be6; --sim-bg: #2e2338;
+  --t-pv: #86c0ff; --t-sp: #c89be6; --t-cv: #5fd0b8; --t-p1: #f39a5f; --t-p2: #b4d36a; --grid: #2c343b;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #14181c; --panel: #1c2126; --panel-2: #22282e; --line: #3a434c; --line-2: #2c343b;
+  --fg: #dde3e8; --muted: #8e99a3; --accent: #6ea4d8; --accent-fg: #0e1720;
+  --pipe: #b9c3cc; --pipe-idle: #4e5862; --liquid: #3b5268;
+  --hi: #ff6a5f; --hi-bg: #4a1c19; --med: #f0b43c; --med-bg: #43340f; --ok: #5fc38a;
+  --sim: #c89be6; --sim-bg: #2e2338;
+  --t-pv: #86c0ff; --t-sp: #c89be6; --t-cv: #5fd0b8; --t-p1: #f39a5f; --t-p2: #b4d36a; --grid: #2c343b;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 14px; line-height: 1.45; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+h1, h2, h3 { font-family: var(--f-head); font-weight: 600; letter-spacing: .01em; margin: 0; text-wrap: balance; }
+.lbl { font-family: var(--f-head); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 12px; color: var(--muted); }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Cabeçalho */
+@media (max-width: 700px) { header.top { position: static !important; } }
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--panel); border-bottom: 1px solid var(--line); }
+.top-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding-block: 10px; }
+.brand { display: flex; flex-direction: column; min-width: 0; margin-right: auto; }
+.brand h1 { font-size: 22px; line-height: 1.1; }
+.brand span { color: var(--muted); font-size: 12.5px; }
+.clock { display: flex; align-items: baseline; gap: 8px; }
+.clock .num { font-size: 18px; font-weight: 500; }
+.runchip { font-family: var(--f-head); font-weight: 600; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 2px 8px; border: 1px solid var(--line); border-radius: 20px; color: var(--muted); }
+.runchip.on { color: var(--fg); border-color: var(--fg); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; background: var(--panel-2); }
+.seg button { border: 0; background: transparent; padding: 5px 10px; font-family: var(--f-num); font-size: 13px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--panel); }
+.btn { border: 1px solid var(--line); background: var(--panel-2); border-radius: var(--r); padding: 6px 12px; font-weight: 500; }
+.btn:hover { border-color: var(--fg); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { border-color: var(--hi); color: var(--hi); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.almsum { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: var(--r); padding: 5px 10px; background: var(--panel-2); text-decoration: none; color: var(--fg); }
+.almsum .count { font-family: var(--f-num); font-weight: 600; }
+.almsum.hi { border-color: var(--hi); background: var(--hi-bg); color: var(--hi); }
+.almsum.med { border-color: var(--med); background: var(--med-bg); color: var(--med); }
+.almsum.blink .count { animation: blink 1s steps(2, start) infinite; }
+@keyframes blink { to { visibility: hidden; } }
+.banner { display: flex; align-items: center; gap: 12px; padding-block: 6px; border-top: 1px solid var(--line-2); font-size: 13px; min-height: 34px; }
+.banner .msg { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banner.hi { background: var(--hi-bg); color: var(--hi); }
+.banner.med { background: var(--med-bg); color: var(--med); }
+.banner.idle { color: var(--muted); }
+.progress { height: 3px; background: var(--line-2); }
+.progress > i { display: block; height: 100%; width: 0; background: var(--sim); }
+nav.tabs { display: flex; gap: 2px; overflow-x: auto; border-top: 1px solid var(--line-2); }
+nav.tabs a { font-family: var(--f-head); font-weight: 600; font-size: 15px; letter-spacing: .03em; padding: 8px 14px; color: var(--muted); text-decoration: none; border-bottom: 3px solid transparent; white-space: nowrap; }
+nav.tabs a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--fg); }
+nav.tabs a .badge { font-family: var(--f-num); font-size: 11px; margin-left: 4px; padding: 0 5px; border-radius: 8px; background: var(--hi); color: var(--panel); }
+
+main { padding-block: 16px 40px; }
+.view { display: grid; gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; min-width: 0; }
+.card > header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.card h2 { font-size: 18px; }
+.card h2 small { font-family: var(--f-body); font-weight: 400; font-size: 12.5px; color: var(--muted); margin-left: 6px; }
+
+/* Tela de processo */
+.proc { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; }
+.proc .left, .proc .right { display: grid; gap: 14px; min-width: 0; }
+@media (max-width: 960px) { .proc { grid-template-columns: minmax(0, 1fr); } }
+.syn svg { width: 100%; height: auto; display: block; }
+.syn text { font-family: var(--f-head); fill: var(--fg); }
+.syn .tagtxt { font-size: 13px; font-weight: 600; }
+.syn .small { font-size: 11.5px; fill: var(--muted); font-family: var(--f-body); }
+.syn .val { font-family: var(--f-num); font-size: 14px; font-weight: 500; }
+.syn .vb rect { fill: var(--panel-2); stroke: var(--line); }
+.syn .vb.hi rect { fill: var(--hi-bg); stroke: var(--hi); stroke-width: 2; }
+.syn .vb.hi text { fill: var(--hi); }
+.syn .vb.med rect { fill: var(--med-bg); stroke: var(--med); stroke-width: 2; }
+.syn .vb.med text { fill: var(--med); }
+.syn .bubble { fill: var(--panel); stroke: var(--fg); stroke-width: 1.5; }
+.syn .pipe { fill: none; stroke: var(--pipe-idle); stroke-width: 6; stroke-linecap: square; }
+.syn.flowing .pipe { stroke: var(--pipe); }
+.syn .flowdash { fill: none; stroke: var(--panel); stroke-width: 2; stroke-dasharray: 6 14; opacity: 0; }
+.syn.flowing .flowdash { opacity: .8; animation: flow var(--flowdur, 1.2s) linear infinite; }
+@keyframes flow { to { stroke-dashoffset: -20; } }
+@media (prefers-reduced-motion: reduce) { .syn.flowing .flowdash { animation: none; } .almsum.blink .count { animation: none; } }
+.syn .sig { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 5 3; }
+.syn .sig.broken { stroke: var(--hi); }
+.syn .equip { fill: var(--panel); stroke: var(--fg); stroke-width: 2; }
+.syn .equip.run { fill: var(--fg); }
+.syn .equip.run + .imp { fill: var(--panel); }
+.syn .equip.trip { stroke: var(--hi); fill: var(--hi-bg); }
+.syn .imp { fill: var(--fg); }
+.syn .tank { fill: var(--panel-2); stroke: var(--fg); stroke-width: 2; }
+.syn .liq { fill: var(--liquid); }
+.syn .simtag rect { fill: var(--sim-bg); stroke: var(--sim); stroke-dasharray: 3 2; }
+.syn .simtag text { fill: var(--sim); font-size: 12px; font-weight: 600; }
+.syn .flt { stroke: var(--sim); stroke-width: 2.5; fill: none; }
+
+.face .pvrow { display: flex; align-items: baseline; gap: 8px; }
+.face .pv { font-family: var(--f-num); font-size: 56px; font-weight: 500; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.face .pv.bad { color: var(--hi); }
+.face .unit { font-family: var(--f-head); font-size: 18px; color: var(--muted); }
+.face .quality { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.face .quality.bad { color: var(--hi); font-weight: 600; }
+.bar { position: relative; height: 18px; background: var(--panel-2); border: 1px solid var(--line); margin-top: 10px; }
+.bar .fill { position: absolute; inset: 0 auto 0 0; background: var(--muted); opacity: .55; }
+.bar .spm { position: absolute; top: -5px; bottom: -5px; width: 0; border-left: 2px solid var(--t-sp); }
+.bar .lim { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px dashed var(--med); }
+.bar .lim.hh { border-left-color: var(--hi); }
+.scale { display: flex; justify-content: space-between; font-family: var(--f-num); font-size: 11px; color: var(--muted); margin-top: 3px; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: center; margin-top: 12px; }
+.kv > .lbl { white-space: nowrap; }
+.kv .v { font-family: var(--f-num); font-variant-numeric: tabular-nums; text-align: right; font-size: 15px; }
+.inrow { display: flex; gap: 6px; min-width: 0; }
+.inrow input { width: 100%; min-width: 0; text-align: right; font-family: var(--f-num); padding: 5px 8px; border: 1px solid var(--line); background: var(--bg); border-radius: var(--r); }
+.inrow input:disabled { opacity: .5; }
+.cvbar { height: 10px; background: var(--panel-2); border: 1px solid var(--line); position: relative; }
+.cvbar i { position: absolute; inset: 0 auto 0 0; background: var(--t-cv); }
+.cvbar b { position: absolute; top: -3px; bottom: -3px; border-left: 2px solid var(--fg); }
+.modepill { display: inline-block; font-family: var(--f-head); font-weight: 700; letter-spacing: .06em; padding: 1px 8px; border: 1.5px solid var(--fg); border-radius: 3px; font-size: 13px; }
+.modepill.man { border-style: dashed; }
+.status-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.status-list li { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--line-2); padding-bottom: 5px; }
+.status-list li:last-child { border-bottom: 0; }
+.status-list .st { font-weight: 600; text-align: right; }
+.st.hi { color: var(--hi); } .st.med { color: var(--med); }
+.big2 { font-family: var(--f-num); font-size: 26px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btnrow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+.faults { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.ftoggle { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); background: var(--panel-2); border-radius: var(--r); padding: 8px 10px; text-align: left; }
+.ftoggle .sw { flex: none; width: 30px; height: 16px; border-radius: 9px; background: var(--line); position: relative; }
+.ftoggle .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--panel); transition: left .15s; }
+.ftoggle[aria-pressed="true"] { border-color: var(--sim); background: var(--sim-bg); }
+.ftoggle[aria-pressed="true"] .sw { background: var(--sim); }
+.ftoggle[aria-pressed="true"] .sw::after { left: 16px; }
+.ftoggle span.t { display: block; font-weight: 600; font-size: 13px; }
+.ftoggle span.d { display: block; font-size: 12px; color: var(--muted); }
+.note { font-size: 12.5px; color: var(--muted); max-width: 70ch; }
+
+/* Tendências */
+.trend-wrap { position: relative; }
+canvas.trend { width: 100%; height: 300px; display: block; touch-action: pan-y; }
+canvas.trend.mini { height: 170px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 18px; height: 0; border-top: 2.5px solid; display: inline-block; }
+.legend i.dash { border-top-style: dashed; }
+
+/* Tabelas */
+.tbl-wrap { overflow-x: auto; }
+table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th { text-align: left; font-family: var(--f-head); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--line); padding: 6px 8px; white-space: nowrap; }
+.tbl td { border-bottom: 1px solid var(--line-2); padding: 6px 8px; vertical-align: top; }
+.tbl td.n { font-family: var(--f-num); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.tbl td.t { font-family: var(--f-num); white-space: nowrap; }
+.tbl tr.hi td:first-child { box-shadow: inset 4px 0 var(--hi); }
+.tbl tr.med td:first-child { box-shadow: inset 4px 0 var(--med); }
+.tbl tr.unack td { font-weight: 600; }
+.prio { font-weight: 600; } .prio.Alta { color: var(--hi); } .prio.Média { color: var(--med); }
+.empty { color: var(--muted); padding: 12px 8px; }
+.cols2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+@media (max-width: 860px) { .cols2 { grid-template-columns: minmax(0, 1fr); } }
+
+/* Engenharia */
+.form { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.field { display: grid; gap: 4px; }
+.field input { font-family: var(--f-num); padding: 6px 8px; border: 1px solid var(--line); background: var(--bg); border-radius: var(--r); width: 100%; }
+.field .hint { font-size: 11.5px; color: var(--muted); }
+.lock { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.lock .field { width: 200px; }
+.err { color: var(--hi); font-size: 13px; }
+.okmsg { color: var(--ok); font-size: 13px; }
+.formula { font-family: var(--f-num); background: var(--panel-2); border: 1px solid var(--line-2); padding: 10px 12px; border-radius: var(--r); overflow-x: auto; white-space: nowrap; font-size: 13px; }
+
+/* Relatório (classes rp- são reaproveitadas no arquivo baixado) */
+.rp { max-width: 980px; }
+.rp h2 { font-family: var(--f-head); font-size: 20px; margin: 22px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+.rp h2:first-of-type { margin-top: 8px; }
+.rp p { max-width: 75ch; }
+.rp-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; border-bottom: 2px solid var(--fg); padding-bottom: 10px; }
+.rp-head h1 { font-size: 26px; }
+.rp-meta { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 13px; }
+.rp-meta dt { color: var(--muted); } .rp-meta dd { margin: 0; }
+.rp-kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin-top: 12px; }
+.rp-kpi { border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; background: var(--panel-2); }
+.rp-kpi b { display: block; font-family: var(--f-num); font-size: 22px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.rp-kpi span { font-size: 12px; color: var(--muted); }
+.rp-chart svg { width: 100%; height: auto; display: block; }
+.rp-chart .ax { stroke: var(--line); } .rp-chart .gr { stroke: var(--grid); }
+.rp-chart text { font-family: var(--f-num); font-size: 11px; fill: var(--muted); }
+.rp-obs li { margin-bottom: 4px; }
+.rp-foot { margin-top: 24px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; }
+.rp-ident { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+
+/* Modal de confirmação */
+.overlay { position: fixed; inset: 0; background: rgba(10, 14, 18, .45); display: grid; place-items: center; z-index: 50; padding: 16px; }
+.dialog { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; max-width: 440px; width: 100%; box-shadow: 0 12px 40px rgba(0,0,0,.25); }
+.dialog h3 { font-size: 20px; margin-bottom: 6px; }
+.toast { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--panel); padding: 10px 14px; border-radius: var(--r); z-index: 60; max-width: min(420px, calc(100vw - 32px)); font-size: 13px; }
+</style>
+
+<header class="top">
+  <div class="wrap top-row">
+    <div class="brand">
+      <h1>FIC-101 · Controle de Vazão</h1>
+      <span>Bancada didática simulada — bomba B-101, transmissores FT-101 / PT-101 / PT-102, válvula FCV-101</span>
+    </div>
+    <div class="clock"><span class="lbl">Tempo de simulação</span><span class="num" id="clock">00:00:00</span><span class="runchip on" id="runchip">Rodando</span></div>
+    <div class="seg" role="group" aria-label="Velocidade da simulação" id="speeds">
+      <button type="button" data-speed="1" aria-pressed="true">×1</button><button type="button" data-speed="5" aria-pressed="false">×5</button><button type="button" data-speed="20" aria-pressed="false">×20</button><button type="button" data-speed="60" aria-pressed="false">×60</button>
+    </div>
+    <button type="button" class="btn" id="btn-run">Pausar</button>
+    <a class="almsum" id="almsum" href="#alarmes"><span class="lbl" style="color:inherit">Alarmes</span><span class="count" id="almcount">0</span></a>
+  </div>
+  <div class="banner idle wrap" id="banner"><span class="msg" id="banner-msg">Nenhum alarme ativo.</span><button type="button" class="btn" id="banner-ack" hidden>Reconhecer</button></div>
+  <div class="progress" id="progress" hidden><i id="progress-bar"></i></div>
+  <nav class="tabs wrap" aria-label="Telas">
+    <a href="#processo" data-tab="processo">Processo</a>
+    <a href="#tendencias" data-tab="tendencias">Tendências</a>
+    <a href="#alarmes" data-tab="alarmes">Alarmes<span class="badge" id="tab-badge" hidden>0</span></a>
+    <a href="#engenharia" data-tab="engenharia">Engenharia (PID)</a>
+    <a href="#relatorio" data-tab="relatorio">Relatório</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <!-- ========== PROCESSO ========== -->
+  <section class="view proc" id="v-processo">
+    <div class="left">
+      <div class="card syn" id="syn">
+        <header><h2>Sinótico<small>malha fechada de vazão</small></h2><span class="lbl" id="syn-state">Fluxo estabelecido</span></header>
+        <svg viewBox="0 0 820 300" role="img" aria-label="Diagrama do processo: tanque, bomba, transmissores, válvula de controle">
+          <!-- Tanque -->
+          <rect class="tank" x="18" y="70" width="112" height="170" rx="4"/>
+          <rect class="liq" x="20" y="132" width="108" height="106"/>
+          <text class="tagtxt" x="74" y="62" text-anchor="middle">TQ-101</text>
+          <text class="small" x="74" y="258" text-anchor="middle">Tanque de alimentação</text>
+          <!-- Tubulação -->
+          <path class="pipe" d="M130 215 H192"/>
+          <path class="pipe" d="M220 187 V120 H792"/>
+          <path class="flowdash" d="M130 215 H192"/>
+          <path class="flowdash" d="M220 187 V120 H792"/>
+          <path style="fill:var(--pipe)" d="M792 110 L810 120 L792 130 Z"/>
+          <text class="small" x="812" y="102" text-anchor="end">Para o processo</text>
+          <!-- Bomba -->
+          <circle class="equip" id="pump-c" cx="220" cy="215" r="28"/>
+          <path class="imp" id="pump-i" d="M208 199 L238 215 L208 231 Z"/>
+          <text class="tagtxt" x="220" y="268" text-anchor="middle">B-101</text>
+          <text class="small" id="pump-txt" x="220" y="284" text-anchor="middle">Parada</text>
+          <!-- PT-101 -->
+          <path class="sig" d="M290 82 V114" style="stroke-dasharray:none"/>
+          <circle class="bubble" cx="290" cy="60" r="22"/><line style="stroke:var(--fg)" x1="268" y1="60" x2="312" y2="60" stroke-width="1"/>
+          <text class="tagtxt" x="290" y="55" text-anchor="middle" style="font-size:11px">PT</text><text class="tagtxt" x="290" y="74" text-anchor="middle" style="font-size:11px">101</text>
+          <g class="vb" id="vb-p1"><rect x="244" y="132" width="92" height="26" rx="3"/><text class="val" id="tx-p1" x="290" y="150" text-anchor="middle">0,00 bar</text></g>
+          <text class="small" x="290" y="174" text-anchor="middle">Descarga</text>
+          <!-- FT-101 -->
+          <rect style="fill:var(--panel);stroke:var(--fg)" x="404" y="110" width="32" height="20" stroke-width="1.5"/>
+          <text x="420" y="124" text-anchor="middle" style="font-size:10px;font-weight:600">FE</text>
+          <path class="sig" d="M420 82 V110" style="stroke-dasharray:none"/>
+          <circle class="bubble" cx="420" cy="60" r="22"/><line style="stroke:var(--fg)" x1="398" y1="60" x2="442" y2="60" stroke-width="1"/>
+          <text class="tagtxt" x="420" y="55" text-anchor="middle" style="font-size:11px">FT</text><text class="tagtxt" x="420" y="74" text-anchor="middle" style="font-size:11px">101</text>
+          <g class="vb" id="vb-q"><rect x="366" y="140" width="108" height="26" rx="3"/><text class="val" id="tx-q" x="420" y="158" text-anchor="middle">0,0 L/min</text></g>
+          <text class="small" id="tx-ma" x="420" y="182" text-anchor="middle">4,00 mA</text>
+          <!-- FIC-101 -->
+          <path class="sig" id="sig-ft" d="M442 60 H478"/>
+          <circle class="bubble" cx="500" cy="60" r="22"/>
+          <text class="tagtxt" x="500" y="55" text-anchor="middle" style="font-size:11px">FIC</text><text class="tagtxt" x="500" y="74" text-anchor="middle" style="font-size:11px">101</text>
+          <path class="sig" d="M522 60 H585 V80"/>
+          <!-- FCV-101 -->
+          <path style="fill:var(--panel);stroke:var(--fg)" d="M565 92 A20 14 0 0 1 605 92 Z" stroke-width="1.5"/>
+          <line style="stroke:var(--fg)" x1="585" y1="92" x2="585" y2="120" stroke-width="1.5"/>
+          <path style="fill:var(--panel);stroke:var(--fg)" d="M562 106 L562 134 L585 120 Z M608 106 L608 134 L585 120 Z" stroke-width="1.5" id="valve-body"/>
+          <text class="tagtxt" x="585" y="160" text-anchor="middle">FCV-101</text>
+          <g class="vb" id="vb-v"><rect x="539" y="168" width="92" height="26" rx="3"/><text class="val" id="tx-v" x="585" y="186" text-anchor="middle">0,0 %</text></g>
+          <text class="small" x="585" y="210" text-anchor="middle">Abertura</text>
+          <!-- PT-102 -->
+          <path class="sig" d="M700 82 V114" style="stroke-dasharray:none"/>
+          <circle class="bubble" cx="700" cy="60" r="22"/><line style="stroke:var(--fg)" x1="678" y1="60" x2="722" y2="60" stroke-width="1"/>
+          <text class="tagtxt" x="700" y="55" text-anchor="middle" style="font-size:11px">PT</text><text class="tagtxt" x="700" y="74" text-anchor="middle" style="font-size:11px">102</text>
+          <g class="vb" id="vb-p2"><rect x="654" y="132" width="92" height="26" rx="3"/><text class="val" id="tx-p2" x="700" y="150" text-anchor="middle">0,00 bar</text></g>
+          <text class="small" x="700" y="174" text-anchor="middle">Jusante</text>
+          <!-- Marcadores de falha simulada -->
+          <g id="mk-obs" hidden><path class="flt" d="M345 108 V132 M352 108 V132 M359 108 V132"/><g class="simtag"><rect x="318" y="190" width="70" height="20" rx="3"/><text x="353" y="204" text-anchor="middle">obstrução</text></g></g>
+          <g id="mk-leak" hidden><path class="flt" d="M470 124 q4 14 0 22 M478 124 q4 18 -2 30 M486 124 q4 12 0 18"/><g class="simtag"><rect x="440" y="214" width="78" height="20" rx="3"/><text x="479" y="228" text-anchor="middle">vazamento</text></g></g>
+          <g id="mk-cable" hidden><g class="simtag"><rect x="424" y="8" width="96" height="20" rx="3"/><text x="472" y="22" text-anchor="middle">cabo rompido</text></g></g>
+          <g id="mk-cav" hidden><g class="simtag"><rect x="140" y="160" width="76" height="20" rx="3"/><text x="178" y="174" text-anchor="middle">cavitação</text></g></g>
+        </svg>
+      </div>
+
+      <div class="card">
+        <header><h2>Tendência rápida<small>últimos 2 minutos</small></h2>
+          <div class="legend"><span><i style="border-color:var(--t-pv)"></i>PV vazão</span><span><i class="dash" style="border-color:var(--t-sp)"></i>SP</span><span><i style="border-color:var(--t-cv)"></i>CV saída (%)</span></div></header>
+        <div class="trend-wrap"><canvas class="trend mini" id="cv-mini"></canvas></div>
+      </div>
+
+      <div class="card">
+        <header><h2>Painel do instrutor<small>falhas simuladas para teste dos alarmes</small></h2></header>
+        <div class="faults" id="faults">
+          <button type="button" class="ftoggle" data-fault="leak" aria-pressed="false"><span class="sw"></span><span><span class="t">Vazamento de grande porte</span><span class="d">Entre FT-101 e a válvula → vazão alta</span></span></button>
+          <button type="button" class="ftoggle" data-fault="obstruction" aria-pressed="false"><span class="sw"></span><span><span class="t">Obstrução na linha</span><span class="d">Filtro entupido → vazão baixa, pressão alta</span></span></button>
+          <button type="button" class="ftoggle" data-fault="cavitation" aria-pressed="false"><span class="sw"></span><span><span class="t">Cavitação na bomba</span><span class="d">Baixa pressão de sucção → vazão baixa e ruidosa</span></span></button>
+          <button type="button" class="ftoggle" data-fault="cable" aria-pressed="false"><span class="sw"></span><span><span class="t">Rompimento do cabo 4–20 mA</span><span class="d">Sinal do FT-101 cai abaixo de 3,8 mA</span></span></button>
+          <button type="button" class="ftoggle" data-fault="trip" aria-pressed="false"><span class="sw"></span><span><span class="t">Desarme térmico da bomba</span><span class="d">Relé de sobrecarga atua e para a B-101</span></span></button>
+        </div>
+        <div class="btnrow">
+          <button type="button" class="btn primary" id="btn-ensaio">Executar ensaio automático (12 min simulados)</button>
+          <button type="button" class="btn" id="btn-restart">Reiniciar simulação</button>
+        </div>
+        <p class="note">O ensaio automático roda a ×60: partida, degraus de setpoint (50 → 80 → 30 → 50 L/min), cada falha por 1 minuto e retorno à operação normal. No final, o relatório é gerado e aberto.</p>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="card face">
+        <header><h2>FIC-101</h2><span class="modepill" id="modepill">AUTO</span></header>
+        <div class="lbl">Vazão instantânea (PV)</div>
+        <div class="pvrow"><span class="pv" id="pv">0,0</span><span class="unit">L/min</span></div>
+        <div class="quality" id="quality">Sinal 4–20 mA válido · faixa 0–150 L/min</div>
+        <div class="bar" id="pvbar" aria-hidden="true"><div class="fill" id="pvfill"></div><div class="lim" id="lim-l"></div><div class="lim hh" id="lim-ll"></div><div class="lim" id="lim-h"></div><div class="lim hh" id="lim-hh"></div><div class="spm" id="spm"></div></div>
+        <div class="scale"><span>0</span><span>50</span><span>100</span><span>150</span></div>
+        <div class="kv">
+          <label class="lbl" for="sp-in">Setpoint (SP)</label>
+          <form class="inrow" id="sp-form"><input id="sp-in" inputmode="decimal" autocomplete="off" value="50,0" aria-describedby="sp-unit"><button class="btn" type="submit">Aplicar</button></form>
+          <span class="lbl">SP atual</span><span class="v" id="sp-v">50,0 L/min</span>
+          <span class="lbl">Erro (SP − PV)</span><span class="v" id="err-v">0,0 L/min</span>
+          <span class="lbl">Saída (CV)</span><span class="v" id="cv-v">0,0 %</span>
+        </div>
+        <div class="cvbar" style="margin-top:8px" aria-hidden="true"><i id="cvfill"></i><b id="vposm"></b></div>
+        <div class="scale"><span>0 %</span><span>barra: comando · marca: posição real</span><span>100 %</span></div>
+        <div class="kv">
+          <span class="lbl">Modo</span>
+          <div class="seg" role="group" aria-label="Modo da malha" id="modes" style="justify-self:end"><button type="button" data-mode="MAN" aria-pressed="false">Manual</button><button type="button" data-mode="AUTO" aria-pressed="true">Automático</button></div>
+          <label class="lbl" for="man-in">Saída manual</label>
+          <form class="inrow" id="man-form"><input id="man-in" inputmode="decimal" autocomplete="off" value="40,0" disabled><button class="btn" type="submit" id="man-btn" disabled>%</button></form>
+        </div>
+        <p class="note" id="mode-note" style="margin:8px 0 0">Em automático o PID calcula a abertura da válvula. Em manual o operador define a saída.</p>
+      </div>
+
+      <div class="card">
+        <header><h2>Estado dos equipamentos</h2></header>
+        <ul class="status-list">
+          <li><span>Bomba B-101</span><span class="st" id="st-pump">Parada</span></li>
+          <li><span>Rotação</span><span class="st num" id="st-speed">0 %</span></li>
+          <li><span>Válvula FCV-101</span><span class="st" id="st-valve">Fechada</span></li>
+          <li><span>Malha FIC-101</span><span class="st" id="st-loop">Automático</span></li>
+          <li><span>Sinal FT-101</span><span class="st" id="st-sig">OK</span></li>
+        </ul>
+        <div class="btnrow"><button type="button" class="btn primary" id="btn-pump-on">Ligar bomba</button><button type="button" class="btn" id="btn-pump-off">Desligar bomba</button></div>
+        <p class="err" id="pump-err" hidden></p>
+      </div>
+
+      <div class="card">
+        <header><h2>Vazão totalizada</h2><span class="lbl" id="tot-since">desde 00:00:00</span></header>
+        <div class="row2"><div><div class="big2" id="tot-l">0,0</div><span class="lbl">litros</span></div><div><div class="big2" id="tot-m3">0,000</div><span class="lbl">m³</span></div></div>
+        <div class="btnrow"><button type="button" class="btn danger" id="btn-tot-reset">Zerar totalizador</button></div>
+      </div>
+
+      <div class="card">
+        <header><h2>Horímetro e manutenção</h2></header>
+        <ul class="status-list">
+          <li><span>Horas de operação da bomba</span><span class="st num" id="hm-h">00:00:00</span></li>
+          <li><span>Partidas da bomba</span><span class="st num" id="hm-starts">0</span></li>
+          <li><span>Ciclos da válvula</span><span class="st num" id="hm-cyc">0</span></li>
+          <li><span>Curso acumulado da válvula</span><span class="st num" id="hm-trav">0 %</span></li>
+        </ul>
+        <p class="note">Ciclo = ida e volta da haste com reversão maior que 0,5 %. Curso acumulado é a soma de todos os movimentos.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== TENDÊNCIAS ========== -->
+  <section class="view" id="v-tendencias" hidden>
+    <div class="card">
+      <header><h2>Vazão, setpoint e saída de controle</h2>
+        <div class="seg" role="group" aria-label="Janela de tempo" id="wins"><button type="button" data-win="60" aria-pressed="false">1 min</button><button type="button" data-win="120" aria-pressed="false">2 min</button><button type="button" data-win="300" aria-pressed="true">5 min</button><button type="button" data-win="600" aria-pressed="false">10 min</button><button type="button" data-win="1800" aria-pressed="false">30 min</button></div></header>
+      <div class="legend" style="margin-bottom:8px"><span><i style="border-color:var(--t-pv)"></i>PV vazão (L/min, eixo esq.)</span><span><i class="dash" style="border-color:var(--t-sp)"></i>SP (L/min)</span><span><i style="border-color:var(--t-cv)"></i>CV saída (%, eixo dir.)</span></div>
+      <div class="trend-wrap"><canvas class="trend" id="cv-flow"></canvas></div>
+    </div>
+    <div class="card">
+      <header><h2>Pressões</h2></header>
+      <div class="legend" style="margin-bottom:8px"><span><i style="border-color:var(--t-p1)"></i>PT-101 descarga (bar)</span><span><i style="border-color:var(--t-p2)"></i>PT-102 jusante (bar)</span></div>
+      <div class="trend-wrap"><canvas class="trend" id="cv-press"></canvas></div>
+      <p class="note">Passe o cursor (ou toque) sobre os gráficos para ler os valores. Escalas fixas: vazão 0–150 L/min, saída 0–100 %, pressão 0–7 bar.</p>
+    </div>
+  </section>
+
+  <!-- ========== ALARMES ========== -->
+  <section class="view" id="v-alarmes" hidden>
+    <div class="card">
+      <header><h2>Alarmes ativos</h2><button type="button" class="btn" id="btn-ackall">Reconhecer todos</button></header>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Tag</th><th>Descrição</th><th>Prioridade</th><th>Estado</th><th>Desde</th><th></th></tr></thead><tbody id="alm-active"></tbody></table></div>
+    </div>
+    <div class="view cols2">
+      <div class="card">
+        <header><h2>Histórico de alarmes</h2><span class="lbl">mais recentes primeiro</span></header>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Tempo</th><th>Tag</th><th>Evento</th><th>Valor</th></tr></thead><tbody id="alm-hist"></tbody></table></div>
+      </div>
+      <div class="card">
+        <header><h2>Registro de eventos</h2><span class="lbl">ações do operador e do sistema</span></header>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Tempo</th><th>Evento</th></tr></thead><tbody id="ev-list"></tbody></table></div>
+      </div>
+    </div>
+    <div class="card">
+      <header><h2>Limites configurados</h2></header>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Tag</th><th>Condição</th><th>Prioridade</th><th>Causa provável</th></tr></thead><tbody id="alm-limits"></tbody></table></div>
+      <p class="note">Retardo de atuação de 1 s e banda morta de 1,5 L/min / 0,1 bar evitam alarmes repetitivos (chattering). Alarmes de vazão baixa e pressão baixa ficam inibidos nos primeiros 8 s após a partida da bomba.</p>
+    </div>
+  </section>
+
+  <!-- ========== ENGENHARIA ========== -->
+  <section class="view" id="v-engenharia" hidden>
+    <div class="card" id="eng-locked">
+      <header><h2>Acesso restrito</h2><span class="lbl">nível engenharia</span></header>
+      <p class="note">Os parâmetros de sintonia e os limites de alarme são protegidos por senha. Senha deste trabalho: <b class="num">1234</b>.</p>
+      <form class="lock" id="lock-form">
+        <div class="field"><label class="lbl" for="pw">Senha</label><input id="pw" type="password" autocomplete="off"></div>
+        <button class="btn primary" type="submit">Entrar</button>
+        <span class="err" id="pw-err" hidden>Senha incorreta. Tente 1234.</span>
+      </form>
+    </div>
+    <div id="eng-open" class="view" hidden>
+      <div class="card">
+        <header><h2>Sintonia do PID</h2><button type="button" class="btn" id="btn-lock">Bloquear</button></header>
+        <div class="formula">CV(t) = Kp · [ e(t) + (1/Ti)·∫e(t)dt − Td·d(PV)/dt ]   ·   e = SP − PV (em % da faixa)</div>
+        <form id="tune-form" style="margin-top:12px">
+          <div class="form">
+            <div class="field"><label class="lbl" for="t-kp">Ganho Kp</label><input id="t-kp" inputmode="decimal"><span class="hint">adimensional (%/%)</span></div>
+            <div class="field"><label class="lbl" for="t-ti">Tempo integral Ti</label><input id="t-ti" inputmode="decimal"><span class="hint">segundos · 0 desliga a ação I</span></div>
+            <div class="field"><label class="lbl" for="t-td">Tempo derivativo Td</label><input id="t-td" inputmode="decimal"><span class="hint">segundos · usual 0 em vazão</span></div>
+            <div class="field"><label class="lbl" for="t-omin">Saída mínima</label><input id="t-omin" inputmode="decimal"><span class="hint">% de abertura</span></div>
+            <div class="field"><label class="lbl" for="t-omax">Saída máxima</label><input id="t-omax" inputmode="decimal"><span class="hint">% de abertura</span></div>
+          </div>
+          <h3 style="font-size:16px;margin:16px 0 8px">Limites de alarme</h3>
+          <div class="form">
+            <div class="field"><label class="lbl" for="a-hh">HH vazão</label><input id="a-hh" inputmode="decimal"><span class="hint">L/min</span></div>
+            <div class="field"><label class="lbl" for="a-h">H vazão</label><input id="a-h" inputmode="decimal"><span class="hint">L/min</span></div>
+            <div class="field"><label class="lbl" for="a-l">L vazão</label><input id="a-l" inputmode="decimal"><span class="hint">L/min</span></div>
+            <div class="field"><label class="lbl" for="a-ll">LL vazão</label><input id="a-ll" inputmode="decimal"><span class="hint">L/min</span></div>
+            <div class="field"><label class="lbl" for="a-pah">Pressão alta PT-101</label><input id="a-pah" inputmode="decimal"><span class="hint">bar</span></div>
+            <div class="field"><label class="lbl" for="a-pal">Pressão baixa PT-101</label><input id="a-pal" inputmode="decimal"><span class="hint">bar</span></div>
+          </div>
+          <div class="btnrow"><button class="btn primary" type="submit">Aplicar parâmetros</button><button class="btn" type="button" id="btn-tune-def">Restaurar padrão</button><span id="tune-msg" class="okmsg" hidden></span></div>
+        </form>
+        <p class="note">Sugestão de experimento: com Kp = 2 o sobressinal sobe para cerca de 8 %, e com Kp = 3 a malha oscila; zere Ti e observe o erro em regime permanente (offset); use Td = 0,5 s e veja o ruído amplificado na saída.</p>
+      </div>
+      <div class="card">
+        <header><h2>Modelo da planta</h2><span class="lbl">usado na simulação</span></header>
+        <div class="tbl-wrap"><table class="tbl"><tbody id="plant-tbl"></tbody></table></div>
+        <div class="formula" style="margin-top:10px">Q = √[ (Ps + H0·n² − Pc) / (kb + kl + kobs + 1/Cv(u)²) ]   ·   Cv(u) = Cvmax · R^(u−1)   ·   PT-101 = Ps + H0·n² − kb·Q²</div>
+        <p class="note">Vazão em regime vem do equilíbrio entre a curva da bomba e a curva do sistema. A dinâmica soma tempo morto de 0,4 s e constante de tempo de 0,9 s. O transmissor converte 0–150 L/min em 4–20 mA, com ruído de turbulência.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== RELATÓRIO ========== -->
+  <section class="view" id="v-relatorio" hidden>
+    <div class="card">
+      <header><h2>Gerar relatório de operação</h2><span class="lbl" id="rp-status">Relatório cobre todo o histórico registrado</span></header>
+      <div class="rp-ident">
+        <div class="field"><label class="lbl" for="id-resp">Responsável / aluno(a)</label><input id="id-resp" autocomplete="off" placeholder="Seu nome"></div>
+        <div class="field"><label class="lbl" for="id-disc">Disciplina / turma</label><input id="id-disc" autocomplete="off" placeholder="Ex.: Automação Industrial"></div>
+        <div class="field"><label class="lbl" for="id-obs">Observação do ensaio</label><input id="id-obs" autocomplete="off" placeholder="Ex.: ensaio com falhas"></div>
+      </div>
+      <div class="btnrow">
+        <button type="button" class="btn primary" id="btn-report">Atualizar relatório</button>
+        <button type="button" class="btn" id="btn-dl-html">Baixar relatório (.html)</button>
+        <button type="button" class="btn" id="btn-dl-csv">Baixar dados (.csv)</button>
+      </div>
+      <p class="note">O .html baixado abre em qualquer navegador e pode ser impresso ou salvo como PDF. O .csv usa ponto e vírgula e vírgula decimal, pronto para o Excel em português.</p>
+    </div>
+    <div class="card"><div class="rp" id="report"></div></div>
+  </section>
+</main>
+
+<div class="overlay" id="confirm" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="cf-title">
+    <h3 id="cf-title">Confirmar</h3>
+    <p id="cf-text" class="note" style="color:var(--fg)"></p>
+    <div class="btnrow" style="justify-content:flex-end"><button type="button" class="btn" id="cf-no">Cancelar</button><button type="button" class="btn primary" id="cf-yes">Confirmar</button></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="simulacao.js"></script>
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = (x, d = 1) => (x === null || x === undefined || !isFinite(x)) ? '—' : x.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const parseNum = str => { const v = parseFloat(String(str).trim().replace(/\./g, '').replace(',', '.')); return isFinite(v) ? v : NaN; };
+const parseNumLoose = str => { const t = String(str).trim(); const v = parseFloat(t.includes(',') ? t.replace(/\./g, '').replace(',', '.') : t); return isFinite(v) ? v : NaN; };
+const hms = s => { s = Math.max(0, Math.floor(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60; return [h, m, ss].map(x => String(x).padStart(2, '0')).join(':'); };
+
+let S = null, speed = 1, running = true, ensaio = null;
+
+function boot(prerun) {
+  S = Sim.create();
+  Sim.cmd.pump(S, true);
+  for (let i = 0; i < prerun / Sim.DT; i++) Sim.step(S);
+}
+boot(120);
+
+/* ---------- Abas ---------- */
+const TABS = ['processo', 'tendencias', 'alarmes', 'engenharia', 'relatorio'];
+let tab = 'processo';
+function showTab() {
+  const h = location.hash.replace('#', '');
+  tab = TABS.includes(h) ? h : 'processo';
+  for (const t of TABS) $('v-' + t).hidden = t !== tab;
+  document.querySelectorAll('nav.tabs a').forEach(a => { if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  if (tab === 'relatorio') renderReport();
+  if (tab === 'engenharia') fillTune();
+  render(true);
+}
+window.addEventListener('hashchange', showTab);
+
+/* ---------- Toast e confirmação ---------- */
+let toastT = 0;
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 3500); }
+function confirmBox(title, text, yesLabel, cb) {
+  $('cf-title').textContent = title; $('cf-text').textContent = text; $('cf-yes').textContent = yesLabel;
+  $('confirm').hidden = false; $('cf-yes').focus();
+  const close = () => { $('confirm').hidden = true; $('cf-yes').onclick = $('cf-no').onclick = null; };
+  $('cf-yes').onclick = () => { close(); cb(); };
+  $('cf-no').onclick = close;
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('confirm').hidden) $('cf-no').click(); });
+
+/* ---------- Controles do cabeçalho ---------- */
+function setSpeed(v) { speed = v; document.querySelectorAll('#speeds button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.speed === v))); }
+$('speeds').addEventListener('click', e => { const b = e.target.closest('button'); if (b && !ensaio) setSpeed(+b.dataset.speed); });
+function setRunning(r) { running = r; $('btn-run').textContent = r ? 'Pausar' : 'Continuar'; $('runchip').textContent = r ? 'Rodando' : 'Pausada'; $('runchip').classList.toggle('on', r); }
+$('btn-run').addEventListener('click', () => setRunning(!running));
+
+/* ---------- Operação ---------- */
+$('sp-form').addEventListener('submit', e => { e.preventDefault(); const v = parseNumLoose($('sp-in').value);
+  if (!isFinite(v) || v < 0 || v > S.cfg.range) { toast('Setpoint inválido. Use um valor entre 0 e 150 L/min.'); return; }
+  Sim.cmd.setSP(S, v); $('sp-in').value = fmt(S.sp); toast('Setpoint aplicado: ' + fmt(S.sp) + ' L/min'); render(true); });
+$('modes').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
+  if (Sim.cmd.setMode(S, b.dataset.mode) === false) toast('Não é possível voltar para automático com o sinal do FT-101 em falha.');
+  if (S.mode === 'MAN') $('man-in').value = fmt(S.manOut); render(true); });
+$('man-form').addEventListener('submit', e => { e.preventDefault(); const v = parseNumLoose($('man-in').value);
+  if (!isFinite(v) || v < 0 || v > 100) { toast('Saída manual deve ficar entre 0 e 100 %.'); return; }
+  Sim.cmd.setManOut(S, v); $('man-in').value = fmt(S.manOut); render(true); });
+$('btn-pump-on').addEventListener('click', () => { const ok = Sim.cmd.pump(S, true); $('pump-err').hidden = ok; if (!ok) $('pump-err').textContent = 'Partida bloqueada: relé térmico desarmado. Remova a falha "Desarme térmico" para rearmar.'; render(true); });
+$('btn-pump-off').addEventListener('click', () => { Sim.cmd.pump(S, false); $('pump-err').hidden = true; render(true); });
+$('btn-tot-reset').addEventListener('click', () => confirmBox('Zerar totalizador?', `O volume acumulado de ${fmt(S.total)} L será zerado e a contagem recomeça agora. O valor anterior fica no registro de eventos.`, 'Zerar', () => { Sim.cmd.resetTotal(S); toast('Totalizador zerado'); render(true); }));
+$('faults').addEventListener('click', e => { const b = e.target.closest('.ftoggle'); if (!b || ensaio) return; const f = b.dataset.fault; Sim.cmd.fault(S, f, !S.faults[f]); render(true); });
+$('btn-restart').addEventListener('click', () => confirmBox('Reiniciar simulação?', 'Todo o histórico, alarmes, totalizador e horímetro serão apagados. A bomba parte de novo com SP de 50 L/min.', 'Reiniciar', () => { stopEnsaio(); boot(0); setRunning(true); $('sp-in').value = fmt(S.sp); toast('Simulação reiniciada'); render(true); }));
+
+/* ---------- Alarmes ---------- */
+const PRIO_CLASS = { 'Alta': 'hi', 'Média': 'med' };
+const STATE_TXT = { ATIVO_NR: 'Ativo · não reconhecido', ATIVO_R: 'Ativo · reconhecido', RTN_NR: 'Normalizado · não reconhecido' };
+function activeAlarms() {
+  return Sim.ALARM_DEFS.map(d => ({ d, a: S.alarms[d.tag] })).filter(x => x.a.state !== 'NORMAL')
+    .sort((x, y) => (x.d.prio === y.d.prio ? 0 : x.d.prio === 'Alta' ? -1 : 1) || (y.a.since - x.a.since));
+}
+$('btn-ackall').addEventListener('click', () => { Sim.cmd.ackAll(S); render(true); });
+$('alm-active').addEventListener('click', e => { const b = e.target.closest('button[data-ack]'); if (b) { Sim.cmd.ack(S, b.dataset.ack); render(true); } });
+$('banner-ack').addEventListener('click', () => { const tag = $('banner-ack').dataset.tag; if (tag) Sim.cmd.ack(S, tag); render(true); });
+function renderLimits() {
+  const a = S.cfg.alm;
+  const rows = [
+    ['FAHH-101', `Vazão > ${fmt(a.HH)} L/min`, 'Alta', 'Ruptura ou vazamento de grande porte, falha da válvula aberta'],
+    ['FAH-101', `Vazão > ${fmt(a.H)} L/min`, 'Média', 'Pico de pressão, vazamento, SP alto demais'],
+    ['FAL-101', `Vazão < ${fmt(a.L)} L/min`, 'Média', 'Obstrução, cavitação, válvula travada'],
+    ['FALL-101', `Vazão < ${fmt(a.LL)} L/min`, 'Alta', 'Tubo vazio, bomba sem escorva, linha bloqueada'],
+    ['XA-101', 'Sinal FT-101 < 3,8 mA', 'Alta', 'Rompimento de cabo ou falha do transmissor (NAMUR NE43)'],
+    ['PAH-101', `PT-101 > ${fmt(a.PAH, 2)} bar`, 'Alta', 'Bomba operando contra válvula fechada ou linha obstruída'],
+    ['PAL-101', `PT-101 < ${fmt(a.PAL, 2)} bar`, 'Média', 'Cavitação, baixa sucção, bomba girando a seco'],
+    ['YA-101', 'Relé térmico atuado', 'Alta', 'Sobrecarga do motor da bomba']
+  ];
+  $('alm-limits').innerHTML = rows.map(r => `<tr class="${PRIO_CLASS[r[2]]}"><td class="t">${esc(r[0])}</td><td>${esc(r[1])}</td><td class="prio ${esc(r[2])}">${esc(r[2])}</td><td>${esc(r[3])}</td></tr>`).join('');
+}
+
+/* ---------- Engenharia ---------- */
+let unlocked = false;
+$('lock-form').addEventListener('submit', e => { e.preventDefault(); if ($('pw').value === '1234') { unlocked = true; $('pw').value = ''; $('pw-err').hidden = true; fillTune(); } else $('pw-err').hidden = false; syncLock(); });
+$('btn-lock').addEventListener('click', () => { unlocked = false; syncLock(); });
+function syncLock() { $('eng-locked').hidden = unlocked; $('eng-open').hidden = !unlocked; }
+const TUNE_FIELDS = [['t-kp', 'Kp', 2], ['t-ti', 'Ti', 2], ['t-td', 'Td', 2], ['t-omin', 'outMin', 1], ['t-omax', 'outMax', 1]];
+const ALM_FIELDS = [['a-hh', 'HH', 1], ['a-h', 'H', 1], ['a-l', 'L', 1], ['a-ll', 'LL', 1], ['a-pah', 'PAH', 2], ['a-pal', 'PAL', 2]];
+function fillTune() { for (const [id, k, d] of TUNE_FIELDS) $(id).value = fmt(S.cfg[k], d); for (const [id, k, d] of ALM_FIELDS) $(id).value = fmt(S.cfg.alm[k], d); }
+$('tune-form').addEventListener('submit', e => { e.preventDefault();
+  const p = { alm: {} }; let bad = null;
+  for (const [id, k] of TUNE_FIELDS) { const v = parseNumLoose($(id).value); if (!isFinite(v) || v < 0) bad = bad || id; p[k] = v; }
+  for (const [id, k] of ALM_FIELDS) { const v = parseNumLoose($(id).value); if (!isFinite(v) || v < 0) bad = bad || id; p.alm[k] = v; }
+  const msg = $('tune-msg');
+  if (!bad && !(p.outMin < p.outMax && p.outMax <= 100)) bad = 't-omin';
+  if (!bad && !(p.alm.LL < p.alm.L && p.alm.L < p.alm.H && p.alm.H < p.alm.HH)) bad = 'a-ll';
+  if (!bad && !(p.alm.PAL < p.alm.PAH)) bad = 'a-pal';
+  if (!bad && p.Kp === 0) bad = 't-kp';
+  if (bad) { msg.className = 'err'; msg.textContent = bad === 't-omin' ? 'Limites de saída: o mínimo deve ser menor que o máximo, e o máximo no máximo 100 %.' : bad === 'a-ll' ? 'Os limites devem obedecer LL < L < H < HH.' : bad === 'a-pal' ? 'Pressão baixa deve ser menor que pressão alta.' : 'Valor inválido em ' + $(bad).previousElementSibling.textContent + '. Use número positivo (Kp maior que zero).'; msg.hidden = false; $(bad).focus(); return; }
+  const n = Sim.cmd.tune(S, p); msg.className = 'okmsg'; msg.textContent = n ? `${n} parâmetro(s) aplicados e registrados no log.` : 'Nada mudou.'; msg.hidden = false; renderLimits(); fillTune(); });
+$('btn-tune-def').addEventListener('click', () => { const d = Sim.create().cfg; Sim.cmd.tune(S, { Kp: d.Kp, Ti: d.Ti, Td: d.Td, outMin: d.outMin, outMax: d.outMax, alm: d.alm }); fillTune(); renderLimits(); const m = $('tune-msg'); m.className = 'okmsg'; m.textContent = 'Valores padrão restaurados.'; m.hidden = false; });
+(function plantTable() {
+  const P = Sim.PLANT;
+  const rows = [['Pressão de sucção Ps', fmt(P.Psuct, 2) + ' bar'], ['Pressão de shutoff da bomba H0', fmt(P.H0, 2) + ' bar'], ['Contrapressão no destino Pc', fmt(P.Pback, 2) + ' bar'],
+    ['Coef. da curva da bomba kb', P.kp.toExponential(1).replace('.', ',') + ' bar/(L/min)²'], ['Perda de carga da linha kl', P.kl.toExponential(1).replace('.', ',') + ' bar/(L/min)²'],
+    ['Válvula: Cv máximo / característica', fmt(P.CvMax, 0) + ' (L/min)/√bar · igual-percentagem, R = ' + P.R], ['Tempo morto / constante de tempo', fmt(P.deadT, 1) + ' s / ' + fmt(P.tauQ, 1) + ' s'],
+    ['Posicionador da válvula', 'τ = ' + fmt(P.tauV, 1) + ' s, máx. ' + P.rateV + ' %/s'], ['Ruído de turbulência no FT-101', 'σ ≈ ' + fmt(P.noise, 2) + ' L/min'], ['Varredura do CLP', fmt(Sim.DT * 1000, 0) + ' ms']];
+  $('plant-tbl').innerHTML = rows.map(r => `<tr><td>${esc(r[0])}</td><td class="n">${esc(r[1])}</td></tr>`).join('');
+})();
+
+/* ---------- Tendências (canvas) ---------- */
+const css = () => { const g = getComputedStyle(document.documentElement); const v = n => g.getPropertyValue(n).trim(); return { fg: v('--fg'), muted: v('--muted'), grid: v('--grid'), line: v('--line'), panel: v('--panel'), pv: v('--t-pv'), sp: v('--t-sp'), cv: v('--t-cv'), p1: v('--t-p1'), p2: v('--t-p2'), num: v('--f-num') }; };
+const hover = {};
+function findIdx(log, t) { let lo = 0, hi = log.length - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (log[m].t < t) lo = m + 1; else hi = m; } return lo; }
+function drawTrend(cv, win, kind) {
+  const W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
+  const dpr = window.devicePixelRatio || 1;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  const C = css(); const padL = 44, padR = kind === 'flow' ? 40 : 14, padT = 10, padB = 24;
+  const pw = W - padL - padR, ph = H - padT - padB;
+  const t1 = Math.max(S.t, win), t0 = t1 - win;
+  const X = t => padL + (t - t0) / win * pw;
+  const axes = kind === 'flow' ? { L: [0, S.cfg.range], R: [0, 100] } : { L: [0, 7] };
+  const YL = v => padT + ph - (v - axes.L[0]) / (axes.L[1] - axes.L[0]) * ph;
+  const YR = v => padT + ph - (v - 0) / 100 * ph;
+  ctx.font = `11px ${C.num}`; ctx.lineWidth = 1;
+  // grade e eixos
+  const ticksL = kind === 'flow' ? [0, 25, 50, 75, 100, 125, 150] : [0, 1, 2, 3, 4, 5, 6, 7];
+  ctx.strokeStyle = C.grid; ctx.fillStyle = C.muted; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (const v of ticksL) { const y = Math.round(YL(v)) + .5; ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + pw, y); ctx.stroke(); ctx.fillText(String(v), padL - 6, y); }
+  if (kind === 'flow') { ctx.textAlign = 'left'; for (const v of [0, 25, 50, 75, 100]) ctx.fillText(v + '%', padL + pw + 6, YR(v)); }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  const step = win <= 60 ? 10 : win <= 120 ? 20 : win <= 300 ? 60 : win <= 600 ? 120 : 300;
+  for (let t = Math.ceil(t0 / step) * step; t <= t1; t += step) { const x = Math.round(X(t)) + .5; ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + ph); ctx.stroke(); ctx.fillText(hms(t), x, padT + ph + 6); }
+  ctx.strokeStyle = C.line; ctx.strokeRect(padL + .5, padT + .5, pw, ph);
+  // limites de alarme (vazão)
+  if (kind === 'flow') { ctx.save(); ctx.setLineDash([2, 4]); ctx.strokeStyle = C.muted; ctx.globalAlpha = .6;
+    for (const v of [S.cfg.alm.H, S.cfg.alm.L]) { const y = YL(v); ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + pw, y); ctx.stroke(); } ctx.restore(); }
+  const L = S.log; if (!L.length) return;
+  const i0 = Math.max(0, findIdx(L, t0) - 1);
+  const every = Math.max(1, Math.floor((L.length - i0) / (pw * 1.5)));
+  const series = kind === 'flow'
+    ? [{ k: 'out', c: C.cv, y: YR, w: 1.5 }, { k: 'sp', c: C.sp, y: YL, w: 1.5, dash: [6, 4] }, { k: 'pv', c: C.pv, y: YL, w: 2 }]
+    : [{ k: 'p2', c: C.p2, y: YL, w: 1.75 }, { k: 'p1', c: C.p1, y: YL, w: 2 }];
+  ctx.save(); ctx.beginPath(); ctx.rect(padL, padT, pw, ph); ctx.clip();
+  for (const s of series) {
+    ctx.strokeStyle = s.c; ctx.lineWidth = s.w; ctx.setLineDash(s.dash || []); ctx.beginPath(); let pen = false;
+    for (let i = i0; i < L.length; i += (i + every < L.length ? every : 1)) { const r = L[i], v = r[s.k];
+      if (v === null) { pen = false; continue; } const x = X(r.t), y = s.y(v); if (!pen) { ctx.moveTo(x, y); pen = true; } else ctx.lineTo(x, y); }
+    ctx.stroke();
+  }
+  ctx.restore(); ctx.setLineDash([]);
+  // cursor
+  const hx = hover[cv.id];
+  if (hx !== undefined && hx >= padL && hx <= padL + pw) {
+    const t = t0 + (hx - padL) / pw * win; const r = L[Math.min(L.length - 1, findIdx(L, t))]; if (!r) return;
+    const x = X(r.t); ctx.strokeStyle = C.fg; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + ph); ctx.stroke();
+    const lines = kind === 'flow' ? [hms(r.t), 'PV ' + fmt(r.pv) + ' L/min', 'SP ' + fmt(r.sp) + ' L/min', 'CV ' + fmt(r.out) + ' %'] : [hms(r.t), 'PT-101 ' + fmt(r.p1, 2) + ' bar', 'PT-102 ' + fmt(r.p2, 2) + ' bar'];
+    const bw = 140, bh = lines.length * 16 + 8; let bx = x + 8; if (bx + bw > padL + pw) bx = x - 8 - bw; const by = padT + 6;
+    ctx.fillStyle = C.panel; ctx.strokeStyle = C.line; ctx.fillRect(bx, by, bw, bh); ctx.strokeRect(bx + .5, by + .5, bw, bh);
+    ctx.fillStyle = C.fg; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; lines.forEach((s, i) => ctx.fillText(s, bx + 8, by + 6 + i * 16));
+  }
+}
+for (const id of ['cv-mini', 'cv-flow', 'cv-press']) {
+  const cv = $(id);
+  const set = e => { const r = cv.getBoundingClientRect(); hover[id] = e.clientX - r.left; if (!running) render(true); };
+  cv.addEventListener('pointermove', set); cv.addEventListener('pointerdown', set);
+  cv.addEventListener('pointerleave', () => { delete hover[id]; if (!running) render(true); });
+}
+let win = 300;
+$('wins').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; win = +b.dataset.win; document.querySelectorAll('#wins button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); render(true); });
+
+/* ---------- Renderização ---------- */
+let lastRender = 0, lastTables = 0;
+function setText(id, v) { const el = $(id); if (el.textContent !== v) el.textContent = v; }
+function vbClass(id, cls) { const el = $(id); el.classList.toggle('hi', cls === 'hi'); el.classList.toggle('med', cls === 'med'); }
+function render(force) {
+  const now = performance.now();
+  if (!force && now - lastRender < 90) return; lastRender = now;
+  const s = S, c = s.cfg, A = s.alarms;
+  const act = k => A[k].state === 'ATIVO_NR' || A[k].state === 'ATIVO_R';
+  setText('clock', hms(s.t));
+  // Alarmes no cabeçalho
+  const list = activeAlarms(); const unack = list.filter(x => x.a.state === 'ATIVO_NR' || x.a.state === 'RTN_NR');
+  const activeN = list.filter(x => x.a.state !== 'RTN_NR').length;
+  setText('almcount', String(activeN));
+  const sum = $('almsum'); const top = list[0];
+  sum.className = 'almsum' + (top && top.a.state !== 'RTN_NR' ? ' ' + PRIO_CLASS[top.d.prio] : '') + (unack.length ? ' blink' : '');
+  const tb = $('tab-badge'); tb.hidden = !unack.length; tb.textContent = String(unack.length);
+  const ban = $('banner'), bu = unack[0] || null;
+  if (bu) { ban.className = 'banner wrap ' + (bu.a.state === 'RTN_NR' ? 'idle' : PRIO_CLASS[bu.d.prio]);
+    setText('banner-msg', `${hms(bu.a.since ?? s.t)}  ${bu.d.tag} · ${bu.d.desc} · ${STATE_TXT[bu.a.state]}${unack.length > 1 ? `  (+${unack.length - 1} não reconhecido${unack.length > 2 ? 's' : ''})` : ''}`);
+    $('banner-ack').hidden = false; $('banner-ack').dataset.tag = bu.d.tag; }
+  else { ban.className = 'banner wrap idle'; setText('banner-msg', activeN ? `${activeN} alarme(s) ativo(s), todos reconhecidos.` : 'Nenhum alarme ativo.'); $('banner-ack').hidden = true; }
+  if (ensaio) $('progress-bar').style.width = Math.min(100, (s.t - ensaio.t0) / ensaio.dur * 100) + '%';
+
+  if (tab === 'processo') {
+    // Faceplate
+    $('pv').classList.toggle('bad', s.bad);
+    setText('pv', s.bad ? '????' : fmt(s.pv));
+    const q = $('quality'); q.classList.toggle('bad', s.bad);
+    setText('quality', s.bad ? `FALHA DE SINAL: ${fmt(s.mA, 2)} mA (abaixo de 3,8 mA). Valor congelado.` : `Sinal ${fmt(s.mA, 2)} mA válido · faixa 0–150 L/min`);
+    const pc = v => Math.max(0, Math.min(100, v / c.range * 100)) + '%';
+    $('pvfill').style.width = pc(s.pv); $('spm').style.left = pc(s.sp);
+    $('lim-l').style.left = pc(c.alm.L); $('lim-ll').style.left = pc(c.alm.LL); $('lim-h').style.left = pc(c.alm.H); $('lim-hh').style.left = pc(c.alm.HH);
+    setText('sp-v', fmt(s.sp) + ' L/min'); setText('err-v', s.bad ? '—' : fmt(s.sp - s.pv) + ' L/min'); setText('cv-v', fmt(s.out) + ' %');
+    $('cvfill').style.width = s.out + '%'; $('vposm').style.left = s.valvePos + '%';
+    const mp = $('modepill'); mp.textContent = s.mode; mp.classList.toggle('man', s.mode === 'MAN');
+    document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === s.mode)));
+    const man = s.mode === 'MAN'; $('man-in').disabled = !man; $('man-btn').disabled = !man;
+    if (!man && document.activeElement !== $('man-in')) $('man-in').value = fmt(s.out);
+    setText('mode-note', man ? 'Manual: o operador define a abertura da válvula. O PID acompanha (bumpless) para voltar ao automático sem tranco.' : (s.pumpCmd ? 'Automático: o PID calcula a abertura da válvula a cada 100 ms.' : 'Automático aguardando a bomba: saída mantida no limite mínimo.'));
+    // Equipamentos
+    const trip = s.faults.trip, run = s.pumpSpeed > 0.05;
+    setText('st-pump', trip ? 'Desarmada' : run ? (s.pumpSpeed < 1 && s.pumpCmd ? 'Partindo' : s.pumpCmd ? 'Ligada' : 'Parando') : 'Desligada');
+    $('st-pump').className = 'st' + (trip ? ' hi' : '');
+    setText('st-speed', fmt(s.pumpSpeed * 100, 0) + ' %');
+    setText('st-valve', s.valvePos < 0.5 ? 'Fechada' : s.valvePos > 99.5 ? 'Totalmente aberta' : 'Modulando ' + fmt(s.valvePos) + ' %');
+    setText('st-loop', s.mode === 'AUTO' ? 'Automático' : 'Manual'); $('st-loop').className = 'st' + (s.mode === 'MAN' ? ' med' : '');
+    setText('st-sig', s.bad ? 'Falha (< 3,8 mA)' : 'OK'); $('st-sig').className = 'st' + (s.bad ? ' hi' : '');
+    $('btn-pump-on').disabled = s.pumpCmd; $('btn-pump-off').disabled = !s.pumpCmd;
+    setText('tot-l', fmt(s.total)); setText('tot-m3', fmt(s.total / 1000, 3)); setText('tot-since', 'desde ' + hms(s.totalSince));
+    setText('hm-h', hms(s.pumpHours)); setText('hm-starts', String(s.pumpStarts)); setText('hm-cyc', fmt(s.valveCycles, 1)); setText('hm-trav', fmt(s.valveTravel, 0) + ' %');
+    // Sinótico
+    const syn = $('syn'); const flowing = s.q > 0.5; syn.classList.toggle('flowing', flowing);
+    syn.style.setProperty('--flowdur', (60 / Math.max(5, s.q) * 0.6).toFixed(2) + 's');
+    setText('syn-state', !flowing ? 'Sem fluxo' : s.bad ? 'Fluxo sem medição' : 'Fluxo estabelecido');
+    setText('tx-p1', fmt(s.p1, 2) + ' bar'); setText('tx-p2', fmt(s.p2, 2) + ' bar'); setText('tx-q', s.bad ? 'FALHA' : fmt(s.pv) + ' L/min');
+    setText('tx-ma', fmt(s.mA, 2) + ' mA'); setText('tx-v', fmt(s.valvePos) + ' %');
+    vbClass('vb-q', act('FAHH-101') || act('FALL-101') || act('XA-101') ? 'hi' : act('FAH-101') || act('FAL-101') ? 'med' : '');
+    vbClass('vb-p1', act('PAH-101') ? 'hi' : act('PAL-101') ? 'med' : '');
+    const pcEl = $('pump-c'); pcEl.classList.toggle('run', run && !trip); pcEl.classList.toggle('trip', trip);
+    $('pump-i').style.fill = run && !trip ? 'var(--panel)' : 'var(--fg)';
+    setText('pump-txt', trip ? 'Desarmada' : run ? 'Em operação · ' + fmt(s.pumpSpeed * 100, 0) + ' %' : 'Parada');
+    $('sig-ft').classList.toggle('broken', s.faults.cable);
+    $('mk-obs').hidden = !s.faults.obstruction; $('mk-leak').hidden = !s.faults.leak; $('mk-cable').hidden = !s.faults.cable; $('mk-cav').hidden = !s.faults.cavitation;
+    document.querySelectorAll('.ftoggle').forEach(b => { b.setAttribute('aria-pressed', String(!!s.faults[b.dataset.fault])); b.disabled = !!ensaio; });
+    $('btn-ensaio').textContent = ensaio ? 'Interromper ensaio' : 'Executar ensaio automático (12 min simulados)';
+    drawTrend($('cv-mini'), 120, 'flow');
+  } else if (tab === 'tendencias') {
+    drawTrend($('cv-flow'), win, 'flow'); drawTrend($('cv-press'), win, 'press');
+  } else if (tab === 'alarmes' && (force || now - lastTables > 500)) {
+    lastTables = now;
+    $('alm-active').innerHTML = list.length ? list.map(({ d, a }) => `<tr class="${PRIO_CLASS[d.prio]}${a.state !== 'ATIVO_R' ? ' unack' : ''}"><td class="t">${esc(d.tag)}</td><td>${esc(d.desc)}</td><td class="prio ${esc(d.prio)}">${esc(d.prio)}</td><td>${esc(STATE_TXT[a.state])}</td><td class="t">${hms(a.since ?? 0)}</td><td>${a.state !== 'ATIVO_R' ? `<button type="button" class="btn" data-ack="${esc(d.tag)}">Reconhecer</button>` : ''}</td></tr>`).join('')
+      : '<tr><td colspan="6" class="empty">Nenhum alarme ativo ou pendente de reconhecimento.</td></tr>';
+    const H = s.alarmHist.slice(-200).reverse();
+    $('alm-hist').innerHTML = H.length ? H.map(h => `<tr class="${h.what === 'Ativado' ? PRIO_CLASS[h.prio] : ''}"><td class="t">${hms(h.t)}</td><td class="t">${esc(h.tag)}</td><td>${esc(h.what)} · ${esc(h.desc)}</td><td class="n">${esc(h.val)}</td></tr>`).join('') : '<tr><td colspan="4" class="empty">Sem registros.</td></tr>';
+    const E = s.events.slice(-200).reverse();
+    $('ev-list').innerHTML = E.length ? E.map(ev => `<tr><td class="t">${hms(ev.t)}</td><td>${esc(ev.text)}</td></tr>`).join('') : '<tr><td colspan="2" class="empty">Sem eventos.</td></tr>';
+  }
+}
+
+/* ---------- Ensaio automático ---------- */
+const ENSAIO = [
+  [0, 'Partida da bomba, malha em AUTO, SP 50 L/min', s => { Sim.cmd.pump(s, true); Sim.cmd.setMode(s, 'AUTO'); Sim.cmd.setSP(s, 50); }],
+  [60, 'Degrau de SP 50 → 80 L/min', s => Sim.cmd.setSP(s, 80)],
+  [150, 'Degrau de SP 80 → 30 L/min', s => Sim.cmd.setSP(s, 30)],
+  [240, 'Degrau de SP 30 → 50 L/min', s => Sim.cmd.setSP(s, 50)],
+  [300, '', s => Sim.cmd.fault(s, 'leak', true)], [360, '', s => { Sim.cmd.fault(s, 'leak', false); Sim.cmd.ackAll(s); }],
+  [420, '', s => Sim.cmd.fault(s, 'obstruction', true)], [480, '', s => { Sim.cmd.fault(s, 'obstruction', false); Sim.cmd.ackAll(s); }],
+  [540, '', s => Sim.cmd.fault(s, 'cavitation', true)], [600, '', s => { Sim.cmd.fault(s, 'cavitation', false); Sim.cmd.ackAll(s); }],
+  [630, '', s => Sim.cmd.fault(s, 'cable', true)], [660, '', s => { Sim.cmd.fault(s, 'cable', false); }], [663, '', s => { Sim.cmd.setMode(s, 'AUTO'); Sim.cmd.ackAll(s); }],
+  [690, '', s => Sim.cmd.fault(s, 'trip', true)], [710, '', s => { Sim.cmd.fault(s, 'trip', false); Sim.cmd.ackAll(s); }], [712, '', s => Sim.cmd.pump(s, true)]
+];
+function startEnsaio() {
+  boot(0); S.events.push({ t: 0, text: 'Início do ensaio automático', kind: 'sys' });
+  ensaio = { t0: 0, dur: 760, i: 0, prevSpeed: speed }; setSpeed(60); setRunning(true);
+  $('progress').hidden = false; $('sp-in').value = fmt(S.sp); toast('Ensaio automático iniciado (×60). Leva cerca de 13 s.'); render(true);
+}
+function stopEnsaio(done) {
+  if (!ensaio) return; const prev = ensaio.prevSpeed; ensaio = null; setSpeed(prev); $('progress').hidden = true;
+  if (done) { S.events.push({ t: S.t, text: 'Fim do ensaio automático', kind: 'sys' }); setRunning(false); $('id-obs').value = $('id-obs').value || 'Ensaio automático: degraus de SP e falhas simuladas'; location.hash = 'relatorio'; showTab(); toast('Ensaio concluído. Relatório gerado.'); }
+}
+function ensaioTick() {
+  while (ensaio && ensaio.i < ENSAIO.length && S.t >= ENSAIO[ensaio.i][0] - 1e-6) { ENSAIO[ensaio.i][2](S); ensaio.i++; }
+  if (ensaio && S.t >= ensaio.dur) stopEnsaio(true);
+}
+$('btn-ensaio').addEventListener('click', () => { if (ensaio) { stopEnsaio(false); toast('Ensaio interrompido'); render(true); return; }
+  confirmBox('Executar ensaio automático?', 'A simulação será reiniciada e o histórico atual apagado. O ensaio dura 12 min simulados (cerca de 13 s reais) e termina abrindo o relatório.', 'Executar ensaio', startEnsaio); });
+
+/* ---------- Relatório ---------- */
+function svgChart(log, series, yMin, yMax, yTicks, unit, right) {
+  const W = 900, H = 240, pl = 46, pr = 44, pt = 10, pb = 26, pw = W - pl - pr, ph = H - pt - pb;
+  if (!log.length) return '';
+  const t0 = log[0].t, t1 = Math.max(log[log.length - 1].t, t0 + 1);
+  const X = t => (pl + (t - t0) / (t1 - t0) * pw).toFixed(1);
+  const Y = (v, lo = yMin, hi = yMax) => (pt + ph - (v - lo) / (hi - lo) * ph).toFixed(1);
+  let g = '';
+  for (const v of yTicks) g += `<line class="gr" x1="${pl}" x2="${pl + pw}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${pl - 6}" y="${+Y(v) + 4}" text-anchor="end">${v}</text>`;
+  if (right) for (const v of [0, 50, 100]) g += `<text x="${pl + pw + 6}" y="${+Y(v, 0, 100) + 4}">${v}%</text>`;
+  const span = t1 - t0, step = [30, 60, 120, 300, 600, 1800, 3600, 7200].find(x => span / x <= 8) || 14400;
+  for (let t = Math.ceil(t0 / step) * step; t <= t1; t += step) g += `<line class="gr" x1="${X(t)}" x2="${X(t)}" y1="${pt}" y2="${pt + ph}"/><text x="${X(t)}" y="${H - 8}" text-anchor="middle">${hms(t)}</text>`;
+  g += `<rect class="ax" x="${pl}" y="${pt}" width="${pw}" height="${ph}" fill="none"/><text x="${pl}" y="${pt - 1}" style="font-size:10px" dy="-1">${esc(unit)}</text>`;
+  const every = Math.max(1, Math.floor(log.length / 900));
+  for (const s of series) {
+    let d = '', pen = false;
+    for (let i = 0; i < log.length; i += every) { const v = log[i][s.k]; if (v === null) { pen = false; continue; } d += (pen ? 'L' : 'M') + X(log[i].t) + ' ' + (s.right ? Y(v, 0, 100) : Y(v)); pen = true; }
+    g += `<path d="${d}" fill="none" style="stroke:${s.color}" stroke-width="${s.w || 1.6}"${s.dash ? ` stroke-dasharray="${s.dash}"` : ''} stroke-linejoin="round"/>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img">${g}</svg>`;
+}
+function legendHTML(items) { return `<div class="legend" style="margin:4px 0 8px">${items.map(([c, t, dash]) => `<span><i${dash ? ' class="dash"' : ''} style="border-color:${c}"></i>${esc(t)}</span>`).join('')}</div>`; }
+
+function buildReport() {
+  const s = S, r = Sim.report(s); if (!r) return '<p class="empty">Ainda não há dados registrados.</p>';
+  const resp = $('id-resp').value.trim(), disc = $('id-disc').value.trim(), obs = $('id-obs').value.trim();
+  const now = new Date();
+  const ts = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const pct = x => x === null ? '—' : fmt(x * 100, 1) + ' %';
+  const st = (o, d, u) => o ? `<td class="n">${fmt(o.mean, d)}</td><td class="n">${fmt(o.min, d)}</td><td class="n">${fmt(o.max, d)}</td><td class="n">${fmt(o.std, d)}</td><td>${u}</td>` : '<td colspan="5" class="empty">sem dados</td>';
+  const steps = r.steps;
+  const validSteps = steps.filter(x => x.valid);
+  const alarmsTotal = Object.values(r.alarmCount).reduce((a, b) => a + b, 0);
+  // Observações automáticas
+  const obsList = [];
+  obsList.push(`A malha ficou em automático com a bomba ligada em ${pct(r.autoFrac)} do período. Nesse tempo, a vazão ficou dentro de ±2 % do setpoint em ${pct(r.inBand)} das amostras.`);
+  if (validSteps.length) {
+    const mo = Math.max(...validSteps.map(x => x.overshoot)); const ts2 = validSteps.filter(x => x.settle !== null).map(x => x.settle);
+    obsList.push(`Foram analisados ${validSteps.length} degrau(s) de setpoint. Sobressinal máximo de ${fmt(mo, 1)} %${ts2.length ? ` e tempo de acomodação entre ${fmt(Math.min(...ts2), 1)} s e ${fmt(Math.max(...ts2), 1)} s` : ''}. ${mo > 20 ? 'O sobressinal está alto: reduza Kp ou aumente Ti.' : mo < 5 ? 'A resposta é bem amortecida, sem oscilação relevante.' : 'A resposta é rápida com sobressinal moderado.'}`);
+    const slow = validSteps.filter(x => x.sp1 < x.sp0); const fast = validSteps.filter(x => x.sp1 > x.sp0);
+    if (slow.length && fast.length) { const a = slow.map(x => x.settle ?? 999), b = fast.map(x => x.settle ?? 999); if (Math.max(...a) > 1.5 * Math.max(...b)) obsList.push('Os degraus para vazões menores acomodam mais devagar. Isso vem da válvula igual-percentagem: com pouca abertura, o ganho do processo é menor e o PID (com sintonia fixa) fica mais lento.'); }
+  } else obsList.push('Nenhum degrau de setpoint válido foi registrado em automático. Altere o SP na tela de processo para analisar a resposta da malha.');
+  if (r.alarmCount['FAH-101'] || r.alarmCount['FAHH-101']) obsList.push('Houve alarme de vazão alta. Com vazamento entre o medidor e a válvula, o PID fecha a válvula até o limite mínimo e mesmo assim não consegue reduzir a vazão medida: saturação da saída é um bom indicador de vazamento.');
+  if (r.alarmCount['FAL-101'] && r.alarmCount['PAH-101']) obsList.push('Vazão baixa junto com pressão de descarga alta indica obstrução a jusante da bomba: a válvula abre até o máximo e a bomba trabalha perto do shutoff.');
+  if (r.alarmCount['PAL-101']) obsList.push('Pressão de descarga baixa com vazão baixa e sinal ruidoso é o sintoma típico de cavitação (falta de pressão na sucção).');
+  if (r.alarmCount['XA-101']) obsList.push('Na falha do sinal 4–20 mA, a malha foi forçada para manual com a saída congelada e o totalizador parou de integrar. Isso evita que o PID abra a válvula ao ler 0 L/min.');
+  if (r.alarmCount['YA-101']) obsList.push('O desarme da bomba interrompeu o fluxo. Com a bomba parada, o PID segura a saída no mínimo para não acumular ação integral (anti-windup).');
+
+  const ev = s.events;
+  const hist = s.alarmHist.filter(h => h.what !== 'Reconhecido');
+  return `
+<div class="rp-head">
+  <div><h1>Relatório de operação · Malha FIC-101</h1><p style="margin:4px 0 0">Controle e monitoramento de vazão · simulação em bancada virtual</p></div>
+  <dl class="rp-meta"><dt>Emitido em</dt><dd>${esc(ts)}</dd><dt>Responsável</dt><dd>${esc(resp || '—')}</dd><dt>Disciplina</dt><dd>${esc(disc || '—')}</dd><dt>Período</dt><dd class="num">${hms(r.t0)} a ${hms(r.t1)} (${fmt((r.t1 - r.t0) / 60, 1)} min)</dd></dl>
+</div>
+${obs ? `<p><b>Observação:</b> ${esc(obs)}</p>` : ''}
+<h2>1. Resumo da operação</h2>
+<div class="rp-kpis">
+  <div class="rp-kpi"><b>${fmt(r.pv?.mean)}</b><span>Vazão média (L/min)</span></div>
+  <div class="rp-kpi"><b>${fmt(r.total, 1)}</b><span>Volume totalizado (L) · ${fmt(r.total / 1000, 3)} m³</span></div>
+  <div class="rp-kpi"><b>${fmt(r.p1?.mean, 2)}</b><span>Pressão de descarga média (bar)</span></div>
+  <div class="rp-kpi"><b>${pct(r.inBand)}</b><span>Tempo dentro de ±2 % do SP (em AUTO)</span></div>
+  <div class="rp-kpi"><b>${fmt(r.absErr?.mean, 2)}</b><span>Erro absoluto médio (L/min)</span></div>
+  <div class="rp-kpi"><b>${alarmsTotal}</b><span>Alarmes ativados no período</span></div>
+</div>
+<h2>2. Gráficos de tendência</h2>
+<div class="rp-chart">${legendHTML([['var(--t-pv)', 'PV vazão (L/min)'], ['var(--t-sp)', 'SP (L/min)', 1], ['var(--t-cv)', 'CV saída (%, eixo dir.)']])}
+${svgChart(s.log, [{ k: 'out', color: 'var(--t-cv)', right: true, w: 1.2 }, { k: 'sp', color: 'var(--t-sp)', dash: '6 4', w: 1.4 }, { k: 'pv', color: 'var(--t-pv)', w: 1.6 }], 0, s.cfg.range, [0, 25, 50, 75, 100, 125, 150], 'L/min', true)}
+${legendHTML([['var(--t-p1)', 'PT-101 descarga (bar)'], ['var(--t-p2)', 'PT-102 jusante (bar)']])}
+${svgChart(s.log, [{ k: 'p2', color: 'var(--t-p2)' }, { k: 'p1', color: 'var(--t-p1)' }], 0, 7, [0, 1, 2, 3, 4, 5, 6, 7], 'bar', false)}</div>
+<h2>3. Desempenho da malha (resposta ao degrau)</h2>
+<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Instante</th><th>Degrau de SP</th><th>Subida 10–90 %</th><th>Sobressinal</th><th>Acomodação ±2 %</th><th>IAE</th><th>Erro em regime</th></tr></thead><tbody>
+${steps.length ? steps.map(x => x.valid ? `<tr><td class="t">${hms(x.t0)}</td><td class="n">${fmt(x.sp0)} → ${fmt(x.sp1)} L/min</td><td class="n">${x.rise === null ? '—' : fmt(x.rise, 1) + ' s'}</td><td class="n">${fmt(x.overshoot, 1)} %</td><td class="n">${x.settle === null ? 'não acomodou' : fmt(x.settle, 1) + ' s'}</td><td class="n">${fmt(x.iae, 2)} L</td><td class="n">${fmt(x.essMean, 2)} L/min</td></tr>`
+    : `<tr><td class="t">${hms(x.t0)}</td><td class="n">${fmt(x.sp0)} → ${fmt(x.sp1)} L/min</td><td colspan="5" class="empty">não analisado: malha fora de AUTO, bomba parada ou falha durante o degrau</td></tr>`).join('') : '<tr><td colspan="7" class="empty">Nenhuma mudança de setpoint no período.</td></tr>'}
+</tbody></table></div>
+<p class="note">IAE = integral do erro absoluto, em litros desviados do setpoint. Erro em regime = média de (PV − SP) nos últimos 10 s do degrau. Janela de análise de até 120 s.</p>
+<h2>4. Estatísticas das variáveis</h2>
+<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Variável</th><th>Média</th><th>Mínimo</th><th>Máximo</th><th>Desvio padrão</th><th>Unidade</th></tr></thead><tbody>
+<tr><td>Vazão PV (FT-101)</td>${st(r.pv, 1, 'L/min')}</tr>
+<tr><td>Setpoint SP</td>${st(r.sp, 1, 'L/min')}</tr>
+<tr><td>Saída de controle CV</td>${st(r.out, 1, '%')}</tr>
+<tr><td>Pressão de descarga PT-101 (bomba ligada)</td>${st(r.p1, 2, 'bar')}</tr>
+<tr><td>Pressão a jusante PT-102 (bomba ligada)</td>${st(r.p2, 2, 'bar')}</tr>
+<tr><td>Erro PV − SP (em AUTO)</td>${st(r.err, 2, 'L/min')}</tr>
+</tbody></table></div>
+<p class="note">${r.n} amostras registradas a cada 0,5 s.</p>
+<h2>5. Alarmes</h2>
+<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Tag</th><th>Descrição</th><th>Prioridade</th><th>Ativações</th></tr></thead><tbody>
+${Sim.ALARM_DEFS.map(d => `<tr class="${r.alarmCount[d.tag] ? PRIO_CLASS[d.prio] : ''}"><td class="t">${esc(d.tag)}</td><td>${esc(d.desc)}</td><td class="prio ${esc(d.prio)}">${esc(d.prio)}</td><td class="n">${r.alarmCount[d.tag] || 0}</td></tr>`).join('')}
+</tbody></table></div>
+${hist.length ? `<h3 style="font-size:15px;margin:14px 0 6px">Sequência de alarmes</h3><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Tempo</th><th>Tag</th><th>Evento</th><th>Valor</th></tr></thead><tbody>${hist.slice(-150).map(h => `<tr><td class="t">${hms(h.t)}</td><td class="t">${esc(h.tag)}</td><td>${esc(h.what)} · ${esc(h.desc)}</td><td class="n">${esc(h.val)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+<h2>6. Registro de eventos</h2>
+<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Tempo</th><th>Evento</th></tr></thead><tbody>
+${ev.length ? ev.slice(-150).map(e => `<tr><td class="t">${hms(e.t)}</td><td>${esc(e.text)}</td></tr>`).join('') : '<tr><td colspan="2" class="empty">Sem eventos.</td></tr>'}
+</tbody></table></div>
+<h2>7. Parâmetros de sintonia e configuração</h2>
+<div class="tbl-wrap"><table class="tbl"><tbody>
+<tr><td>Ganho proporcional Kp</td><td class="n">${fmt(r.cfg.Kp, 2)}</td><td>Tempo integral Ti</td><td class="n">${fmt(r.cfg.Ti, 2)} s</td></tr>
+<tr><td>Tempo derivativo Td</td><td class="n">${fmt(r.cfg.Td, 2)} s</td><td>Limites de saída</td><td class="n">${fmt(r.cfg.outMin, 0)} a ${fmt(r.cfg.outMax, 0)} %</td></tr>
+<tr><td>Alarmes de vazão LL / L / H / HH</td><td class="n" colspan="3">${fmt(r.cfg.alm.LL, 0)} / ${fmt(r.cfg.alm.L, 0)} / ${fmt(r.cfg.alm.H, 0)} / ${fmt(r.cfg.alm.HH, 0)} L/min</td></tr>
+<tr><td>Alarmes de pressão PT-101 (baixa / alta)</td><td class="n" colspan="3">${fmt(r.cfg.alm.PAL, 2)} / ${fmt(r.cfg.alm.PAH, 2)} bar</td></tr>
+<tr><td>Faixa do transmissor FT-101</td><td class="n" colspan="3">0–${fmt(r.cfg.range, 0)} L/min ↔ 4–20 mA · falha abaixo de 3,8 mA</td></tr>
+</tbody></table></div>
+<h2>8. Manutenção</h2>
+<div class="tbl-wrap"><table class="tbl"><tbody>
+<tr><td>Horas de operação da bomba B-101</td><td class="n">${hms(r.pumpHours)}</td></tr>
+<tr><td>Partidas da bomba</td><td class="n">${r.pumpStarts}</td></tr>
+<tr><td>Ciclos da válvula FCV-101</td><td class="n">${fmt(r.valveCycles, 1)}</td></tr>
+<tr><td>Curso acumulado da válvula</td><td class="n">${fmt(r.valveTravel, 0)} %</td></tr>
+</tbody></table></div>
+<h2>9. Observações automáticas</h2>
+<ul class="rp-obs">${obsList.map(o => `<li>${esc(o)}</li>`).join('')}</ul>
+<p class="rp-foot">Gerado pelo Supervisório FIC-101 (simulação). Modelo: bomba centrífuga com curva parabólica, válvula igual-percentagem (R = ${Sim.PLANT.R}), tempo morto ${fmt(Sim.PLANT.deadT, 1)} s, constante de tempo ${fmt(Sim.PLANT.tauQ, 1)} s, PID ISA com anti-windup e derivada sobre a PV, varredura de ${fmt(Sim.DT * 1000, 0)} ms.</p>`;
+}
+function renderReport() { $('report').innerHTML = buildReport(); setText('rp-status', `Atualizado em ${hms(S.t)} de simulação · ${S.log.length} amostras`); }
+$('btn-report').addEventListener('click', () => { renderReport(); toast('Relatório atualizado'); });
+for (const id of ['id-resp', 'id-disc', 'id-obs']) {
+  try { const v = localStorage.getItem('fic101-' + id); if (v) $(id).value = v; } catch (e) {}
+  $(id).addEventListener('change', () => { try { localStorage.setItem('fic101-' + id, $(id).value); } catch (e) {} if (tab === 'relatorio') renderReport(); });
+}
+
+/* ---------- Downloads ---------- */
+const dlP = (window.claude && typeof window.claude.use === 'function') ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+async function saveFile(filename, data) {
+  const dl = await dlP;
+  if (dl) {
+    try { await dl.save({ filename, data }); toast('Arquivo salvo: ' + filename); }
+    catch (e) { const c = e && e.code; toast(c === 'declined' ? 'Download cancelado.' : c === 'rate_limited' ? 'Já há um download aguardando confirmação. Tente de novo em instantes.' : 'Não foi possível baixar aqui (' + (c || 'erro') + ').'); }
+    return;
+  }
+  try { // arquivo aberto localmente no navegador
+    const blob = new Blob([data], { type: filename.endsWith('.csv') ? 'text/csv;charset=utf-8' : 'text/html;charset=utf-8' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('Download iniciado: ' + filename);
+  } catch (e) { toast('Este visualizador bloqueou o download.'); }
+}
+const REPORT_VARS = `:root{--bg:#ffffff;--panel:#ffffff;--panel-2:#f2f4f6;--line:#b4bcc4;--line-2:#dde2e6;--fg:#1b232b;--muted:#59646f;--grid:#e1e5e9;--hi:#c4261d;--med:#a86f00;--t-pv:#1d4f80;--t-sp:#7b3fa0;--t-cv:#2a7d6d;--t-p1:#a24a1a;--t-p2:#4f6b1f;--f-head:"Barlow Condensed","Arial Narrow",sans-serif;--f-body:"IBM Plex Sans","Segoe UI",Arial,sans-serif;--f-num:"IBM Plex Mono",Consolas,monospace;--r:4px}
+body{background:#fff;color:var(--fg);font-family:var(--f-body);font-size:13px;line-height:1.45;margin:0;padding:24px}
+h1,h2,h3{font-family:var(--f-head);font-weight:600;margin:0}.num{font-family:var(--f-num)}.note{font-size:12px;color:var(--muted)}
+[hidden]{display:none!important}
+@media print{body{padding:0}.rp h2{break-after:avoid}.rp-chart,tr{break-inside:avoid}}`;
+function reportCSS() { // reaproveita as regras rp-, tbl e legend da própria página
+  const out = []; for (const sh of document.styleSheets) { let rules; try { rules = sh.cssRules; } catch (e) { continue; } for (const r of rules) { const t = r.cssText; if (/\.(rp|tbl|legend|empty|prio)/.test(t) && !t.startsWith('@media (prefers')) out.push(t); } }
+  return out.join('\n');
+}
+$('btn-dl-html').addEventListener('click', () => {
+  renderReport();
+  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relatório FIC-101</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>${REPORT_VARS}\n${reportCSS()}</style></head><body><div class="rp">${$('report').innerHTML}</div></body></html>`;
+  const d = new Date(); const stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '-' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0');
+  saveFile(`relatorio-FIC-101-${stamp}.html`, html);
+});
+$('btn-dl-csv').addEventListener('click', () => {
+  const f = (x, d) => x === null ? '' : x.toFixed(d).replace('.', ',');
+  const rows = ['tempo_s;tempo_hms;setpoint_L_min;vazao_PV_L_min;saida_CV_pct;posicao_valvula_pct;pressao_PT101_bar;pressao_PT102_bar;sinal_FT101_mA;totalizado_L;modo;bomba;falha_simulada'];
+  for (const r of S.log) rows.push([f(r.t, 1), hms(r.t), f(r.sp, 1), f(r.pv, 2), f(r.out, 2), f(r.vp, 2), f(r.p1, 3), f(r.p2, 3), f(r.mA, 3), f(r.tot, 2), r.mode, r.pump ? 'ligada' : 'desligada', r.flt ? 'sim' : 'nao'].join(';'));
+  const d = new Date(); const stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '-' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0');
+  saveFile(`dados-FIC-101-${stamp}.csv`, '﻿' + rows.join('\r\n'));
+});
+
+/* ---------- Laço principal ---------- */
+setInterval(() => {
+  if (running) { for (let i = 0; i < speed; i++) { Sim.step(S); if (ensaio) { ensaioTick(); if (!ensaio) break; } } }
+  render(false);
+}, 100);
+
+renderLimits(); setSpeed(1); syncLock(); showTab();
+})();
+</script>
+
+</body>
+</html>
