@@ -2,9 +2,11 @@
 
 IHM/SCADA simulada de uma malha de controle de vazão, com bomba centrífuga, válvula de controle, transmissores de vazão e pressão e um controlador PID. A página roda direto no navegador, sem instalação, e gera relatórios de operação com vazão, pressão, alarmes e desempenho da malha.
 
+**Simulador online: https://areque1.github.io/supervisorio-vazao/**
+
 ## Como usar
 
-1. Abra o `index.html` em qualquer navegador (ou acesse a página publicada pelo GitHub Pages, se estiver ativada).
+1. Acesse o [simulador online](https://areque1.github.io/supervisorio-vazao/) ou abra o `index.html` em qualquer navegador.
 2. Na aba **Processo**, clique em **Executar ensaio automático**. Ele simula 12 minutos de operação em cerca de 13 segundos e abre o relatório no final.
 3. Na aba **Relatório**, preencha a identificação e baixe o relatório (`.html`) ou os dados (`.csv`).
 
